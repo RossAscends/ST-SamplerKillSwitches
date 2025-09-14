@@ -267,10 +267,6 @@ function addKillSwitch(samplerIDs) {
             return;
         }
 
-        if (samplerID === 'amount_gen') {
-            targetSampler = $('#amount_gen');
-        }
-
         const buttonHTML = `<i id="${samplerID}_samplerKillswitch" class="killSwitch fa-solid fa-power-off menu_button toggleEnabled togglable margin0 interactable" title="Toggle this sampler" tabindex="0"></i>`;
         const buttonID = `${samplerID}_samplerKillswitch`;
 
@@ -325,7 +321,7 @@ function addKillSwitch(samplerIDs) {
     // Special case for Amount Gen block
     const $amtGenBlock = $("#amount_gen_block");
     const AmtGenButtonHTML = `<i id="amount_gen_samplerKillswitch" class="killSwitch fa-solid fa-power-off menu_button toggleEnabled togglable margin0 interactable" title="Toggle this sampler" tabindex="0"></i>`;
-    $amtGenBlock.append(AmtGenButtonHTML);
+    $amtGenBlock.children().first().append(AmtGenButtonHTML).addClass('alignItemsBaseline flex-container justifyCenter');
     $(`#amount_gen_samplerKillswitch`).off().on('click', () => {
         console.log('Toggling Amount Gen sampler');
         $(`#amount_gen_samplerKillswitch`).toggleClass('toggleEnabled');
@@ -358,8 +354,8 @@ function addKillSwitch(samplerIDs) {
         samplerHotButtonsContainer.parent().find('.killSwitch').parent().parent().toggleClass('deadSampler');
         samplerHotButtonsContainer.parent().find('.killSwitch').toggleClass('toggleEnabled');
 
-        $("#pro-settings-block").find('.killSwitch').parent().toggleClass('deadSampler'); //for amount_gen
-        $("#pro-settings-block").find('.killSwitch').toggleClass('toggleEnabled');
+        $("#amount_gen_block").toggleClass('deadSampler'); //for amount_gen
+        $("#amount_gen_block").find('.killSwitch').toggleClass('toggleEnabled');
 
         //because banned strings has its own native killswitch
         $('#send_banned_tokens_label').find('i').trigger('click');
@@ -439,7 +435,7 @@ function filterSamplers(data) {
     }
 
     //remove banned_Strings based on the power-off class inside send_banned_tokens_label
-    if ($('#send_banned_tokens_label').find('i').hasClass('fa-power-off')) {
+    if (!$('#send_banned_tokens_label').find('i').hasClass('toggleEnabled')) {
         console.warn('Removing banned_strings from data due to send_banned_tokens being off');
         delete data['banned_strings'];
         delete data['custom_token_bans'];
