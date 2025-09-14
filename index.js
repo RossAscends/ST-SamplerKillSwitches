@@ -339,6 +339,7 @@ function addKillSwitch(samplerIDs) {
         //$(`#dynatemp_samplerKillswitch`).toggleClass('toggleEnabled');
         $dynatempBlock.toggleClass('deadSampler');
         $dynatempBlock.find('.killSwitch').toggleClass('toggleEnabled');
+        $("send_banned_tokens_textgenerationwebui").trigger('click'); //to trigger a data refresh
     });
     console.log('[samplerKillSwitch] Added Dynatemp killswitch');
 
@@ -355,7 +356,8 @@ function addKillSwitch(samplerIDs) {
         $("#pro-settings-block").find('.killSwitch').parent().toggleClass('deadSampler'); //for amount_gen
         $("#pro-settings-block").find('.killSwitch').toggleClass('toggleEnabled');
 
-        $('#send_banned_tokens_textgenerationwebui').trigger('click');
+        //because banned strings has its own native killswitch
+        $('#send_banned_tokens_label').find('i').trigger('click');
         $(this).toggleClass('toggleEnabled');
     });
 
@@ -420,6 +422,13 @@ function filterSamplers(data) {
             console.debug(`Keeping ${dataKey} in data (maps to ${mappedKey}, not in deadSamplers)`);
         }
     });
+
+    //remove banned_Strings based on the power-off class inside send_banned_tokens_label
+    if ($('#send_banned_tokens_label').find('i').hasClass('fa-power-off')) {
+        console.warn('Removing banned_strings from data due to send_banned_tokens being off');
+        delete data['banned_strings'];
+        delete data['custom_token_bans'];
+    }
 
     console.error('Updated data:', data);
 }
