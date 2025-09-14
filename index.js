@@ -240,6 +240,7 @@ const blockStyleInputIDs = [
     'negative_prompt_textgenerationwebui',
     'tabby_json_schema',
     'logit_bias_textgenerationwebui',
+    'grammar_string_textgenerationwebui',
 ];
 
 function addKillSwitch(samplerIDs) {
@@ -278,6 +279,9 @@ function addKillSwitch(samplerIDs) {
             var $smallBlock = $(`#${samplerID}_textgenerationwebui`).parent().find('small');
             if (samplerID === 'json_schema') {
                 $smallBlock = $("#json_schema_block").find('h4');
+            }
+            if (samplerID === 'grammar_string') {
+                $smallBlock = $("#grammar_block_ooba").find('h4').children().first();
             }
 
             if (samplerID === 'logit_bias') {
@@ -379,6 +383,12 @@ function updateDeadSamplersList() {
             if ($('#negative_prompt_textgenerationwebui').parent().children().first().hasClass('deadSampler')) {
                 deadSamplers.push(samplerID);
             }
+        } else if (samplerID === 'grammar_string') {
+            console.warn('Checking grammar_string dead status', $('#grammar_block_ooba').hasClass('deadSampler'));
+            if ($('#grammar_block_ooba').find('h4').hasClass('deadSampler')) {
+                console.warn('saw grammar_string as dead');
+                deadSamplers.push(samplerID);
+            }
         } else if (samplerID === 'json_schema') {
             console.warn('Checking json_schema dead status', $('#json_schema_block').find('h4').hasClass('deadSampler'));
             if ($('#json_schema_block').hasClass('deadSampler')) {
@@ -423,6 +433,10 @@ function filterSamplers(data) {
             console.debug(`Keeping ${dataKey} in data (maps to ${mappedKey}, not in deadSamplers)`);
         }
     });
+
+    if (deadSamplers.includes('mirostat_mode')) {
+        delete data['mirostat'];
+    }
 
     //remove banned_Strings based on the power-off class inside send_banned_tokens_label
     if ($('#send_banned_tokens_label').find('i').hasClass('fa-power-off')) {
