@@ -265,7 +265,8 @@ function addKillSwitch(samplerIDs) {
         const buttonHTML = `<i id="${samplerID}_samplerKillswitch" class="killSwitch fa-solid fa-power-off menu_button toggleEnabled togglable margin0 interactable" title="Toggle this sampler" tabindex="0"></i>`;
         const buttonID = `${samplerID}_samplerKillswitch`;
 
-        var $small = $(`#${samplerID}_textgenerationwebui`).parent();
+        var $small = $(`#${samplerID}_textgenerationwebui`).parent().find('small');
+        var $smallBlock = $(`#${samplerID}_textgenerationwebui`).parent();
         if (!$small.length) {
             console.debug(`No parent found for #${samplerID}_textgenerationwebui`);
             return;
@@ -279,20 +280,22 @@ function addKillSwitch(samplerIDs) {
 
         if (blockStyleInputIDs.includes(targetSampler.prop('id'))) {
             console.debug(`Found block-style input: ${targetSampler.prop('id')}`);
+            $smallBlock.parent().find('.range-block-title').append(buttonHTML);
 
-            $small.parent().find('.range-block-title').append(buttonHTML);
             if (targetSampler.prop('id') === 'dry_sequence_breakers_textgenerationwebui') {
-                $small.parent().find('.killSwitch').addClass('inline-block');
-            };
+                $smallBlock.parent().find('.killSwitch').addClass('inline-block');
+            }
             $(`#${buttonID}`).off().on('click', () => {
                 $(`#${buttonID}`).toggleClass('toggleEnabled');
                 targetSampler.parent().parent().toggleClass('deadSampler');
             });
         } else {
             $small.append(buttonHTML);
+            $small.addClass('flex-container alignItemsBaseline');
             $(`#${buttonID}`).off().on('click', () => {
                 $(`#${buttonID}`).toggleClass('toggleEnabled');
                 targetSampler.parent().toggleClass('deadSampler');
+
             });
         }
     });
@@ -315,8 +318,12 @@ function addKillSwitch(samplerIDs) {
         //console.error('Toggling all samplers');
         //console.error(samplerHotButtonsContainer.parent().find('.killSwitch').length);
         //console.error(samplerHotButtonsContainer);
-        samplerHotButtonsContainer.parent().find('.killSwitch').parent().toggleClass('deadSampler');
+        samplerHotButtonsContainer.parent().find('.killSwitch').parent().parent().toggleClass('deadSampler');
         samplerHotButtonsContainer.parent().find('.killSwitch').toggleClass('toggleEnabled');
+
+        $("#pro-settings-block").find('.killSwitch').parent().toggleClass('deadSampler'); //for amount_gen
+        $("#pro-settings-block").find('.killSwitch').toggleClass('toggleEnabled');
+
         $('#send_banned_tokens_textgenerationwebui').trigger('click');
         $(this).toggleClass('toggleEnabled');
     });
