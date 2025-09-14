@@ -184,6 +184,7 @@ const keyMapping = {
     mirostat_eta: 'mirostat_eta',
     mirostat_mode: 'mirostat_mode',
     mirostat_tau: 'mirostat_tau',
+    n: 'n',
     n_predict: 'n_predict',
     negative_prompt: 'negative_prompt',
     nsigma: 'nsigma',
