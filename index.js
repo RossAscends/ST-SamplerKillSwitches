@@ -155,6 +155,7 @@ const keyMapping = {
     dry_multiplier: 'dry_multiplier',
     dry_penalty_last_n: 'dry_penalty_last_n',
     dry_sequence_breakers: 'dry_sequence_breakers',
+    dynatemp: 'dynatemp',
     dynamic_temperature: 'dynatemp',
     dynatemp_exponent: 'dynatemp_exponent',
     dynatemp_high: 'max_temp',
@@ -222,20 +223,23 @@ const keyMapping = {
     xtc_threshold: 'xtc_threshold',
     max_new_tokens: 'max_new_tokens',
     max_tokens: 'max_tokens',
+    json_schema: 'json_schema',
 };
 
 const skippedSamplers = [
-    'min_temp',
-    'max_temp',
-    'dynatemp_exponent',
     'send_banned_tokens',
     'streaming',
-    'dynatemp',
     'banned_tokens',
     'global_banned_tokens',
-    'negative_prompt',
 ];
 
+const blockStyleInputIDs = [
+    'dry_sequence_breakers_textgenerationwebui',
+    'guidance_scale_textgenerationwebui',
+    'negative_prompt_textgenerationwebui',
+    'tabby_json_schema',
+    'logit_bias_textgenerationwebui',
+];
 
 function addKillSwitch(samplerIDs) {
     // Ensure samplerIDs is an array (since we now pass an array)
@@ -253,6 +257,9 @@ function addKillSwitch(samplerIDs) {
         }
 
         targetSampler = $(`#${samplerID}_textgenerationwebui`);
+        if (samplerID === 'json_schema') targetSampler = $("#tabby_json_schema");
+        if (samplerID === 'logit_bias') targetSampler = $("#logit_bias_textgenerationwebui");
+        //console.warn(`Processing samplerID: ${targetSampler.prop('id')}`);
         if (!targetSampler.length) {
             console.debug(`No element found with ID: ${samplerID}_textgenerationwebui`);
             return;
@@ -265,31 +272,41 @@ function addKillSwitch(samplerIDs) {
         const buttonHTML = `<i id="${samplerID}_samplerKillswitch" class="killSwitch fa-solid fa-power-off menu_button toggleEnabled togglable margin0 interactable" title="Toggle this sampler" tabindex="0"></i>`;
         const buttonID = `${samplerID}_samplerKillswitch`;
 
-        var $small = $(`#${samplerID}_textgenerationwebui`).parent().find('small');
-        var $smallBlock = $(`#${samplerID}_textgenerationwebui`).parent();
-        if (!$small.length) {
-            console.debug(`No parent found for #${samplerID}_textgenerationwebui`);
-            return;
-        }
-
-        const blockStyleInputIDs = [
-            'dry_sequence_breakers_textgenerationwebui',
-            'guidance_scale_textgenerationwebui',
-            'negative_prompt_textgenerationwebui',
-        ];
-
         if (blockStyleInputIDs.includes(targetSampler.prop('id'))) {
-            console.debug(`Found block-style input: ${targetSampler.prop('id')}`);
-            $smallBlock.parent().find('.range-block-title').append(buttonHTML);
-
-            if (targetSampler.prop('id') === 'dry_sequence_breakers_textgenerationwebui') {
-                $smallBlock.parent().find('.killSwitch').addClass('inline-block');
+            console.warn(`Found block-style input: ${targetSampler.prop('id')}`);
+            var $smallBlock = $(`#${samplerID}_textgenerationwebui`).parent().find('small');
+            if (samplerID === 'json_schema') {
+                $smallBlock = $("#json_schema_block").find('h4');
             }
-            $(`#${buttonID}`).off().on('click', () => {
-                $(`#${buttonID}`).toggleClass('toggleEnabled');
-                targetSampler.parent().parent().toggleClass('deadSampler');
-            });
+
+            if (samplerID === 'logit_bias') {
+                console.warn('Special case for logit_bias, targeting h4');
+                $smallBlock = $("#logit_bias_block_ooba").find('h4');
+            }
+            console.warn('$smallBlock:', $smallBlock);
+            if (!$smallBlock.length) {
+                console.debug(`No parent found for #${samplerID}_textgenerationwebui`);
+                return;
+            } else {
+                console.warn('$smallBlock found:', $smallBlock, 'for', samplerID);
+                $smallBlock.addClass('alignItemsBaseline flex-container justifyCenter');
+                if (samplerID === 'logit_bias') {
+                    $smallBlock.removeClass('justifyCenter');
+                 }
+                $smallBlock.append(buttonHTML);
+                $(`#${buttonID}`).off().on('click', () => {
+                    $(`#${buttonID}`).toggleClass('toggleEnabled');
+                    targetSampler.parent().toggleClass('deadSampler');
+                });
+            }
+
         } else {
+            var $small = $(`#${samplerID}_textgenerationwebui`).parent().find('small');
+
+            if (!$small.length) {
+                console.debug(`No parent found for #${samplerID}_textgenerationwebui`);
+                return;
+            }
             $small.append(buttonHTML);
             $small.addClass('flex-container alignItemsBaseline');
             $(`#${buttonID}`).off().on('click', () => {
@@ -310,6 +327,20 @@ function addKillSwitch(samplerIDs) {
         $amtGenBlock.toggleClass('deadSampler');
     });
     console.log('[samplerKillSwitch] Added Amount Gen killswitch');
+
+    //special case for dynatemp block
+    const $dynatempBlock = $("#dynatemp_block_ooba");
+    const $dynaTempMasterCheckboxContainer = $("#dynatemp_textgenerationwebui").parent().parent();
+
+    const DynatempButtonHTML = `<i id="dynatemp_samplerKillswitch" class="killSwitch fa-solid fa-power-off menu_button toggleEnabled togglable margin0 interactable" title="Toggle this sampler" tabindex="0"></i>`;
+    $dynaTempMasterCheckboxContainer.append(DynatempButtonHTML);
+    $(`#dynatemp_samplerKillswitch`).off().on('click', () => {
+        console.log('Toggling Dynatemp sampler');
+        //$(`#dynatemp_samplerKillswitch`).toggleClass('toggleEnabled');
+        $dynatempBlock.toggleClass('deadSampler');
+        $dynatempBlock.find('.killSwitch').toggleClass('toggleEnabled');
+    });
+    console.log('[samplerKillSwitch] Added Dynatemp killswitch');
 
     const masterToggleHTML = '<i id="toggleAllSamplers_button" class="masterKillSwitch fa-solid fa-power-off menu_button toggleEnabled togglable interactable" title="Toggle all samplers" tabindex="0"></i>';
     samplerHotButtonsContainer.prepend(masterToggleHTML);
@@ -341,6 +372,15 @@ function updateDeadSamplersList() {
             }
         } else if (targetSampler.parent().hasClass('deadSampler')) {
             deadSamplers.push(samplerID);
+        } else if (samplerID === 'negative_prompt') {
+            if ($('#negative_prompt_textgenerationwebui').parent().children().first().hasClass('deadSampler')) {
+                deadSamplers.push(samplerID);
+            }
+        } else if (samplerID === 'json_schema') {
+            console.warn('Checking json_schema dead status', $('#json_schema_block').find('h4').hasClass('deadSampler'));
+            if ($('#json_schema_block').hasClass('deadSampler')) {
+                deadSamplers.push(samplerID);
+            }
         }
 
     });
