@@ -5,6 +5,7 @@ const samplerIDs = setting_names;
 const samplerHotButtonsContainer = $('#samplerSelectButton').parent().parent();
 
 
+
 /* const DOMnames = [
     'temp',
     'temperature_last',
@@ -169,6 +170,7 @@ const keyMapping = {
     frequency_penalty: 'freq_pen',
     ignore_eos: 'ban_eos_token',
     include_reasoning: 'include_reasoning',
+    json_schema: 'json_schema',
     length_penalty: 'length_penalty',
     logit_bias: 'logit_bias',
     max_tokens_second: 'max_tokens_second',
@@ -181,9 +183,11 @@ const keyMapping = {
     mirostat_eta: 'mirostat_eta',
     mirostat_mode: 'mirostat_mode',
     mirostat_tau: 'mirostat_tau',
+    n_predict: 'n_predict',
     negative_prompt: 'negative_prompt',
     nsigma: 'nsigma',
     num_beams: 'num_beams',
+    num_predict: 'num_predict',
     parseSequenceBreakers: 'dry_sequence_breakers',
     presence_penalty: 'presence_pen',
     repetition_penalty: 'rep_pen',
@@ -216,6 +220,8 @@ const keyMapping = {
     typical_p: 'typical_p',
     xtc_probability: 'xtc_probability',
     xtc_threshold: 'xtc_threshold',
+    max_new_tokens: 'max_new_tokens',
+    max_tokens: 'max_tokens',
 };
 
 const skippedSamplers = [
@@ -238,16 +244,22 @@ function addKillSwitch(samplerIDs) {
         return;
     }
 
+
     samplerIDs.forEach((samplerID) => {
+        let targetSampler;
 
         if (skippedSamplers.includes(samplerID)) {
             return;
         }
 
-        const targetSampler = $(`#${samplerID}_textgenerationwebui`);
+        targetSampler = $(`#${samplerID}_textgenerationwebui`);
         if (!targetSampler.length) {
             console.debug(`No element found with ID: ${samplerID}_textgenerationwebui`);
             return;
+        }
+
+        if (samplerID === 'amount_gen') {
+            targetSampler = $('#amount_gen');
         }
 
         const buttonHTML = `<i id="${samplerID}_samplerKillswitch" class="killSwitch fa-solid fa-power-off menu_button toggleEnabled togglable margin0 interactable" title="Toggle this sampler" tabindex="0"></i>`;
@@ -285,10 +297,21 @@ function addKillSwitch(samplerIDs) {
         }
     });
 
+    // Special case for Amount Gen block
+    const $amtGenBlock = $("#amount_gen_block");
+    const AmtGenButtonHTML = `<i id="amount_gen_samplerKillswitch" class="killSwitch fa-solid fa-power-off menu_button toggleEnabled togglable margin0 interactable" title="Toggle this sampler" tabindex="0"></i>`;
+    $amtGenBlock.append(AmtGenButtonHTML);
+    $(`#amount_gen_samplerKillswitch`).off().on('click', () => {
+        console.log('Toggling Amount Gen sampler');
+        $(`#amount_gen_samplerKillswitch`).toggleClass('toggleEnabled');
+        $amtGenBlock.toggleClass('deadSampler');
+    });
+    console.log('[samplerKillSwitch] Added Amount Gen killswitch');
+
     const masterToggleHTML = '<i id="toggleAllSamplers_button" class="masterKillSwitch fa-solid fa-power-off menu_button toggleEnabled togglable interactable" title="Toggle all samplers" tabindex="0"></i>';
     samplerHotButtonsContainer.prepend(masterToggleHTML);
 
-    $('#toggleAllSamplers_button').off().on('click', function() {
+    $('#toggleAllSamplers_button').off().on('click', function () {
         //console.error('Toggling all samplers');
         //console.error(samplerHotButtonsContainer.parent().find('.killSwitch').length);
         //console.error(samplerHotButtonsContainer);
@@ -312,12 +335,25 @@ function updateDeadSamplersList() {
         } else if (targetSampler.parent().hasClass('deadSampler')) {
             deadSamplers.push(samplerID);
         }
+
     });
+    //special case for amount_gen
+    const isAmtGenKilled = $('#amount_gen_block').hasClass('deadSampler');
+        if (isAmtGenKilled) {
+            console.log('saw amount_gen as dead');
+            deadSamplers.push('max_new_tokens');
+            deadSamplers.push('max_tokens');
+            deadSamplers.push('n_predict');
+            deadSamplers.push('num_predict');
+        }
+
     return deadSamplers;
 }
 
 function filterSamplers(data) {
     const deadSamplers = updateDeadSamplersList();
+    console.error('Dead samplers:', deadSamplers);
+    console.error('Original data:', data);
 
     if (deadSamplers.length === 0) {
         console.debug('No dead samplers, skipping filtering');
@@ -329,23 +365,20 @@ function filterSamplers(data) {
         // Get the corresponding setting_names key from keyMapping
         const mappedKey = keyMapping[dataKey];
         if (mappedKey && deadSamplers.includes(mappedKey)) {
-            //console.error(`Deleting ${dataKey} from data (maps to ${mappedKey} in deadSamplers)`);
-            //console.error(`Before: data[${dataKey}] =`, data[dataKey]);
+            console.error(`Deleting ${dataKey} from data (maps to ${mappedKey} in deadSamplers)`);
+            console.error(`Before: data[${dataKey}] =`, data[dataKey]);
             delete data[dataKey];
-            //console.error(`After: data[${dataKey}] =`, data[dataKey]);
+            console.error(`After: data[${dataKey}] =`, data[dataKey]);
         } else {
             console.debug(`Keeping ${dataKey} in data (maps to ${mappedKey}, not in deadSamplers)`);
         }
     });
 
     console.error('Updated data:', data);
-
-    // Optional: Trigger a new generation request
-    // sendGenerationRequest(callParams); // Uncomment and define callParams if needed
-    // generate(); // Uncomment only if safe and necessary
 }
 
-jQuery(() => {
+jQuery(async () => {
     addKillSwitch(samplerIDs);
-    eventSource.on(event_types.TEXT_COMPLETION_SETTINGS_READY, filterSamplers );
+    eventSource.on(event_types.TEXT_COMPLETION_SETTINGS_READY, filterSamplers);
+
 });
