@@ -261,7 +261,7 @@ function addKillSwitch(samplerIDs) {
         targetSampler = $(`#${samplerID}_textgenerationwebui`);
         if (samplerID === 'json_schema') targetSampler = $("#tabby_json_schema");
         if (samplerID === 'logit_bias') targetSampler = $("#logit_bias_textgenerationwebui");
-        //console.warn(`Processing samplerID: ${targetSampler.prop('id')}`);
+        //console.debug(`Processing samplerID: ${targetSampler.prop('id')}`);
         if (!targetSampler.length) {
             console.debug(`No element found with ID: ${samplerID}_textgenerationwebui`);
             return;
@@ -271,7 +271,7 @@ function addKillSwitch(samplerIDs) {
         const buttonID = `${samplerID}_samplerKillswitch`;
 
         if (blockStyleInputIDs.includes(targetSampler.prop('id'))) {
-            console.warn(`Found block-style input: ${targetSampler.prop('id')}`);
+            console.debug(`Found block-style input: ${targetSampler.prop('id')}`);
             var $smallBlock = $(`#${samplerID}_textgenerationwebui`).parent().find('small');
             if (samplerID === 'json_schema') {
                 $smallBlock = $("#json_schema_block").find('h4');
@@ -281,15 +281,15 @@ function addKillSwitch(samplerIDs) {
             }
 
             if (samplerID === 'logit_bias') {
-                console.warn('Special case for logit_bias, targeting h4');
+                console.debug('Special case for logit_bias, targeting h4');
                 $smallBlock = $("#logit_bias_block_ooba").find('h4');
             }
-            console.warn('$smallBlock:', $smallBlock);
+            console.debug('$smallBlock:', $smallBlock);
             if (!$smallBlock.length) {
                 console.debug(`No parent found for #${samplerID}_textgenerationwebui`);
                 return;
             } else {
-                console.warn('$smallBlock found:', $smallBlock, 'for', samplerID);
+                console.debug('$smallBlock found:', $smallBlock, 'for', samplerID);
                 $smallBlock.addClass('alignItemsBaseline flex-container justifyCenter');
                 if (samplerID === 'logit_bias') {
                     $smallBlock.removeClass('justifyCenter');
@@ -348,9 +348,9 @@ function addKillSwitch(samplerIDs) {
     samplerHotButtonsContainer.prepend(masterToggleHTML);
 
     $('#toggleAllSamplers_button').off().on('click', function () {
-        //console.error('Toggling all samplers');
-        //console.error(samplerHotButtonsContainer.parent().find('.killSwitch').length);
-        //console.error(samplerHotButtonsContainer);
+        //console.debug('Toggling all samplers');
+        //console.debug(samplerHotButtonsContainer.parent().find('.killSwitch').length);
+        //console.debug(samplerHotButtonsContainer);
         samplerHotButtonsContainer.parent().find('.killSwitch').parent().parent().toggleClass('deadSampler');
         samplerHotButtonsContainer.parent().find('.killSwitch').toggleClass('toggleEnabled');
 
@@ -362,7 +362,7 @@ function addKillSwitch(samplerIDs) {
         $(this).toggleClass('toggleEnabled');
     });
 
-    console.error('RA-SamplerKillswitches loaded');
+    console.log('RA-SamplerKillswitches loaded');
 }
 
 function updateDeadSamplersList() {
@@ -380,13 +380,13 @@ function updateDeadSamplersList() {
                 deadSamplers.push(samplerID);
             }
         } else if (samplerID === 'grammar_string') {
-            console.warn('Checking grammar_string dead status', $('#grammar_block_ooba').hasClass('deadSampler'));
+            console.debug('Checking grammar_string dead status', $('#grammar_block_ooba').hasClass('deadSampler'));
             if ($('#grammar_block_ooba').find('h4').hasClass('deadSampler')) {
-                console.warn('saw grammar_string as dead');
+                console.debug('saw grammar_string as dead');
                 deadSamplers.push(samplerID);
             }
         } else if (samplerID === 'json_schema') {
-            console.warn('Checking json_schema dead status', $('#json_schema_block').find('h4').hasClass('deadSampler'));
+            console.debug('Checking json_schema dead status', $('#json_schema_block').find('h4').hasClass('deadSampler'));
             if ($('#json_schema_block').hasClass('deadSampler')) {
                 deadSamplers.push(samplerID);
             }
@@ -408,8 +408,8 @@ function updateDeadSamplersList() {
 
 function filterSamplers(data) {
     const deadSamplers = updateDeadSamplersList();
-    console.error('Dead samplers:', deadSamplers);
-    console.error('Original data:', data);
+    console.debug('Dead samplers:', deadSamplers);
+    console.debug('Original data:', data);
 
     if (deadSamplers.length === 0) {
         console.debug('No dead samplers, skipping filtering');
@@ -421,10 +421,10 @@ function filterSamplers(data) {
         // Get the corresponding setting_names key from keyMapping
         const mappedKey = keyMapping[dataKey];
         if (mappedKey && deadSamplers.includes(mappedKey)) {
-            console.error(`Deleting ${dataKey} from data (maps to ${mappedKey} in deadSamplers)`);
-            console.error(`Before: data[${dataKey}] =`, data[dataKey]);
+            console.debug(`Deleting ${dataKey} from data (maps to ${mappedKey} in deadSamplers)`);
+            console.debug(`Before: data[${dataKey}] =`, data[dataKey]);
             delete data[dataKey];
-            console.error(`After: data[${dataKey}] =`, data[dataKey]);
+            console.debug(`After: data[${dataKey}] =`, data[dataKey]);
         } else {
             console.debug(`Keeping ${dataKey} in data (maps to ${mappedKey}, not in deadSamplers)`);
         }
@@ -436,12 +436,12 @@ function filterSamplers(data) {
 
     //remove banned_Strings based on the power-off class inside send_banned_tokens_label
     if (!$('#send_banned_tokens_label').find('i').hasClass('toggleEnabled')) {
-        console.warn('Removing banned_strings from data due to send_banned_tokens being off');
+        console.debug('Removing banned_strings from data due to send_banned_tokens being off');
         delete data['banned_strings'];
         delete data['custom_token_bans'];
     }
 
-    console.error('Updated data:', data);
+    console.debug('Updated data:', data);
 }
 
 jQuery(async () => {
